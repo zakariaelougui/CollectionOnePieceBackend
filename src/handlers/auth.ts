@@ -10,6 +10,7 @@ import {
 } from "../services/auth.service.js";
 
 const credentialsSchema = z.object({
+  username: z.string().min(2).max(100),
   email: z.email(),
   password: z.string().min(8).max(16),
 });
@@ -22,9 +23,9 @@ export async function register(c: Context) {
     return c.json({ error: parsed.error.message }, 400);
   }
 
-  console.log("zak sucks balls imported from git");
+  console.log("Data parsed: ", parsed.data);
 
-  const { email, password } = parsed.data;
+  const { username, email, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -32,11 +33,11 @@ export async function register(c: Context) {
   }
 
   const passwordHash = await hashPassword(password);
-  const user = await prisma.user.create({ data: { email, passwordHash } });
+  const user = await prisma.user.create({ data: { username, email, passwordHash } });
 
   return c.json(
     {
-      user: { id: user.id, email: user.email },
+      user: { id: user.id, email: user.email, username: user.username },
       accessToken: signAccessToken(user.id),
       refreshToken: signRefreshToken(user.id),
     },
