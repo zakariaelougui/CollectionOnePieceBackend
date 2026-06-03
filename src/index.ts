@@ -14,6 +14,7 @@ const app = new Hono();
 
 app.use("*", cors());
 
+// Base routes
 app.route("/auth", authRouter);
 app.route("/cards", cardsRouter);
 app.route("/lists", listsRouter);
