@@ -22,6 +22,8 @@ export async function register(c: Context) {
     return c.json({ error: parsed.error.message }, 400);
   }
 
+  console.log("zak sucks balls imported from git");
+
   const { email, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
