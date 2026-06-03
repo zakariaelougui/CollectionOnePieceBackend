@@ -2,6 +2,7 @@ import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { showRoutes } from "hono/dev";
 import { prisma } from "./lib/prisma.js";
 import { authRouter } from "./routes/auth.js";
 import { cardsRouter } from "./routes/cards.js";
@@ -31,6 +32,7 @@ async function bootstrap() {
 
   serve({ fetch: app.fetch, port: PORT });
   console.log(`Server running on http://localhost:${PORT}`);
+  showRoutes(app);
 }
 
 bootstrap().catch((err) => {
