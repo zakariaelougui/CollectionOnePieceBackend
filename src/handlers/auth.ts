@@ -9,8 +9,13 @@ import {
   verifyRefreshToken,
 } from "../services/auth.service.js";
 
-const credentialsSchema = z.object({
+const credentialsSchemaRegister = z.object({
   username: z.string().min(2).max(100),
+  email: z.email(),
+  password: z.string().min(8).max(16),
+});
+
+const credentialsSchemaLogin = z.object({
   email: z.email(),
   password: z.string().min(8).max(16),
 });
@@ -18,7 +23,7 @@ const credentialsSchema = z.object({
 export async function register(c: Context) {
   const body = await c.req.json();
 
-  const parsed = credentialsSchema.safeParse(body);
+  const parsed = credentialsSchemaRegister.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.message }, 400);
   }
@@ -37,7 +42,7 @@ export async function register(c: Context) {
 
   return c.json(
     {
-      user: { id: user.id, email: user.email, username: user.username },
+      user: { email: user.email, username: user.username },
       accessToken: signAccessToken(user.id),
       refreshToken: signRefreshToken(user.id),
     },
@@ -47,7 +52,7 @@ export async function register(c: Context) {
 
 export async function login(c: Context) {
   const body = await c.req.json();
-  const parsed = credentialsSchema.safeParse(body);
+  const parsed = credentialsSchemaLogin.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.message }, 400);
   }

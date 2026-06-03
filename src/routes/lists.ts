@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
+import { createOne, deleteOne, getAll, getOne, updateOne } from "../handlers/lists.js";
 
 type Variables = { userId: string };
 
@@ -9,73 +10,16 @@ export const listsRouter = new Hono<{ Variables: Variables }>();
 
 listsRouter.use("*", authMiddleware);
 
-const listBodySchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-});
+// list methods
+listsRouter.get("/", getAll);
 
-listsRouter.get("/", async (c) => {
-  const userId = c.get("userId");
-  const lists = await prisma.list.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { listCards: true } } },
-  });
-  return c.json(lists);
-});
+listsRouter.post("/", createOne);
 
-listsRouter.post("/", async (c) => {
-  const userId = c.get("userId");
-  const body = await c.req.json();
-  const parsed = listBodySchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+listsRouter.get("/:id", getOne);
 
-  const list = await prisma.list.create({
-    data: { ...parsed.data, userId },
-  });
-  return c.json(list, 201);
-});
+listsRouter.put("/:id", updateOne);
 
-listsRouter.get("/:id", async (c) => {
-  const userId = c.get("userId");
-  const list = await prisma.list.findFirst({
-    where: { id: c.req.param("id"), userId },
-    include: {
-      listCards: { include: { card: true }, orderBy: { addedAt: "desc" } },
-    },
-  });
-  if (!list) return c.json({ error: "List not found" }, 404);
-  return c.json(list);
-});
-
-listsRouter.put("/:id", async (c) => {
-  const userId = c.get("userId");
-  const body = await c.req.json();
-  const parsed = listBodySchema.partial().safeParse(body);
-  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
-
-  const existing = await prisma.list.findFirst({
-    where: { id: c.req.param("id"), userId },
-  });
-  if (!existing) return c.json({ error: "List not found" }, 404);
-
-  const list = await prisma.list.update({
-    where: { id: c.req.param("id") },
-    data: parsed.data,
-  });
-  return c.json(list);
-});
-
-listsRouter.delete("/:id", async (c) => {
-  const userId = c.get("userId");
-  const existing = await prisma.list.findFirst({
-    where: { id: c.req.param("id"), userId },
-  });
-  if (!existing) return c.json({ error: "List not found" }, 404);
-
-  await prisma.list.delete({ where: { id: c.req.param("id") } });
-  return c.json({ success: true });
-});
+listsRouter.delete("/:id", deleteOne);
 
 // --- List card management ---
 
